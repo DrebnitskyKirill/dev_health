@@ -10,7 +10,10 @@ import Webcam from "react-webcam";
 import * as tf from "@tensorflow/tfjs";
 import "@tensorflow/tfjs-backend-webgl";
 import * as posedetection from "@tensorflow-models/pose-detection";
-import { POSE_DETECTION_CONFIG, getAdaptiveConfig } from "../../shared/config/poseDetection";
+import {
+  POSE_DETECTION_CONFIG,
+  getAdaptiveConfig,
+} from "../../shared/config/poseDetection";
 
 type PoseDetector = posedetection.PoseDetector;
 
@@ -60,8 +63,8 @@ const PosturePage: React.FC = () => {
   const [performance, setPerformance] = useState<{
     fps: number;
     avgProcessingTime: number;
-    quality: 'high' | 'medium' | 'low';
-  }>({ fps: 0, avgProcessingTime: 0, quality: 'high' });
+    quality: "high" | "medium" | "low";
+  }>({ fps: 0, avgProcessingTime: 0, quality: "high" });
 
   const videoConstraints = useMemo(
     () => ({
@@ -145,84 +148,104 @@ const PosturePage: React.FC = () => {
   }, [performance.quality]);
 
   // Оптимизированная функция обработки позы
-  const processPose = useCallback(async (detector: PoseDetector, video: HTMLVideoElement) => {
-    const startTime = performance.now();
-    const config = getCurrentConfig();
-    
-    try {
-      const estimation = await detector.estimatePoses(video, config);
-      const pose = estimation?.[0];
-      
-      if (!pose || !pose.keypoints) return null;
+  const processPose = useCallback(
+    async (detector: PoseDetector, video: HTMLVideoElement) => {
+      const startTime = Date.now();
+      const config = getCurrentConfig();
 
-      const kp = Object.fromEntries(
-        pose.keypoints.map((k: any) => [k.name, k])
-      );
-      
-      const leftShoulder = kp["left_shoulder"] || kp["leftShoulder"];
-      const rightShoulder = kp["right_shoulder"] || kp["rightShoulder"];
-      const nose = kp["nose"];
-      
-      if (!leftShoulder || !rightShoulder || !nose) return null;
+      try {
+        const estimation = await detector.estimatePoses(video, config);
+        const pose = estimation?.[0];
 
-      // Проверяем уверенность ключевых точек
-      if (leftShoulder.score < MIN_CONFIDENCE || 
-          rightShoulder.score < MIN_CONFIDENCE || 
-          nose.score < MIN_CONFIDENCE) {
+        if (!pose || !pose.keypoints) return null;
+
+        const kp = Object.fromEntries(
+          pose.keypoints.map((k: any) => [k.name, k])
+        );
+
+        const leftShoulder = kp["left_shoulder"] || kp["leftShoulder"];
+        const rightShoulder = kp["right_shoulder"] || kp["rightShoulder"];
+        const nose = kp["nose"];
+
+        if (!leftShoulder || !rightShoulder || !nose) return null;
+
+        // Проверяем уверенность ключевых точек
+        if (
+          leftShoulder.score < MIN_CONFIDENCE ||
+          rightShoulder.score < MIN_CONFIDENCE ||
+          nose.score < MIN_CONFIDENCE
+        ) {
+          return null;
+        }
+
+        const midShoulderX = (leftShoulder.x + rightShoulder.x) / 2;
+        const midShoulderY = (leftShoulder.y + rightShoulder.y) / 2;
+        const angle = computeAngleDeg(
+          nose.x,
+          nose.y,
+          midShoulderX,
+          midShoulderY,
+          midShoulderX,
+          midShoulderY - 50
+        );
+
+        // Сглаживание результатов
+        const now = Date.now();
+        const lastResult = lastResultsRef.current;
+        if (lastResult && now - lastResult.timestamp < SMOOTHING_WINDOW_MS) {
+          const smoothedAngle =
+            lastResult.angle * SMOOTHING_FACTOR +
+            angle * (1 - SMOOTHING_FACTOR);
+          lastResultsRef.current = {
+            angle: smoothedAngle,
+            timestamp: now,
+            confidence: pose.score || 0,
+          };
+          return { angle: smoothedAngle, pose, confidence: pose.score || 0 };
+        }
+
+        lastResultsRef.current = {
+          angle,
+          timestamp: now,
+          confidence: pose.score || 0,
+        };
+        return { angle, pose, confidence: pose.score || 0 };
+      } catch (error) {
+        console.error("Error processing pose:", error);
         return null;
-      }
+      } finally {
+        // Мониторинг производительности
+        const processingTime = Date.now() - startTime;
+        const perf = performanceRef.current;
+        perf.frameTimes.push(processingTime);
+        perf.frameCount++;
 
-      const midShoulderX = (leftShoulder.x + rightShoulder.x) / 2;
-      const midShoulderY = (leftShoulder.y + rightShoulder.y) / 2;
-      const angle = computeAngleDeg(
-        nose.x,
-        nose.y,
-        midShoulderX,
-        midShoulderY,
-        midShoulderX,
-        midShoulderY - 50
-      );
+        // Ограничиваем размер массива для расчета среднего
+        if (perf.frameTimes.length > PERFORMANCE_HISTORY_SIZE) {
+          perf.frameTimes.shift();
+        }
 
-      // Сглаживание результатов
-      const now = Date.now();
-      const lastResult = lastResultsRef.current;
-      if (lastResult && now - lastResult.timestamp < SMOOTHING_WINDOW_MS) {
-        const smoothedAngle = lastResult.angle * SMOOTHING_FACTOR + angle * (1 - SMOOTHING_FACTOR);
-        lastResultsRef.current = { angle: smoothedAngle, timestamp: now, confidence: pose.score || 0 };
-        return { angle: smoothedAngle, pose, confidence: pose.score || 0 };
-      }
+        // Обновляем статистику каждые N кадров
+        if (perf.frameCount % PERFORMANCE_UPDATE_INTERVAL === 0) {
+          const avgProcessingTime =
+            perf.frameTimes.reduce((a, b) => a + b, 0) / perf.frameTimes.length;
+          const fps = 1000 / avgProcessingTime;
 
-      lastResultsRef.current = { angle, timestamp: now, confidence: pose.score || 0 };
-      return { angle, pose, confidence: pose.score || 0 };
-    } catch (error) {
-      console.error('Error processing pose:', error);
-      return null;
-    } finally {
-      // Мониторинг производительности
-      const processingTime = performance.now() - startTime;
-      const perf = performanceRef.current;
-      perf.frameTimes.push(processingTime);
-      perf.frameCount++;
-      
-      // Ограничиваем размер массива для расчета среднего
-      if (perf.frameTimes.length > PERFORMANCE_HISTORY_SIZE) {
-        perf.frameTimes.shift();
+          // Адаптивное качество
+          let quality: "high" | "medium" | "low" = "high";
+          if (fps < QUALITY_THRESHOLDS.LOW_FPS) quality = "low";
+          else if (fps < QUALITY_THRESHOLDS.MEDIUM_FPS) quality = "medium";
+
+          setPerformance({
+            fps: Math.round(fps),
+            avgProcessingTime: Math.round(avgProcessingTime),
+            quality,
+          });
+        }
       }
-      
-      // Обновляем статистику каждые N кадров
-      if (perf.frameCount % PERFORMANCE_UPDATE_INTERVAL === 0) {
-        const avgProcessingTime = perf.frameTimes.reduce((a, b) => a + b, 0) / perf.frameTimes.length;
-        const fps = 1000 / avgProcessingTime;
-        
-        // Адаптивное качество
-        let quality: 'high' | 'medium' | 'low' = 'high';
-        if (fps < QUALITY_THRESHOLDS.LOW_FPS) quality = 'low';
-        else if (fps < QUALITY_THRESHOLDS.MEDIUM_FPS) quality = 'medium';
-        
-        setPerformance({ fps: Math.round(fps), avgProcessingTime: Math.round(avgProcessingTime), quality });
-      }
-    }
-  }, [getCurrentConfig]);
+    },
+    [getCurrentConfig]
+  );
 
   // Предварительная загрузка модели
   useEffect(() => {
@@ -230,23 +253,23 @@ const PosturePage: React.FC = () => {
       try {
         await tf.setBackend("webgl");
         await tf.ready();
-        
-        console.log('Preloading MoveNet model...');
+
+        console.log("Preloading MoveNet model...");
         const detector = await posedetection.createDetector(
           posedetection.SupportedModels.MoveNet,
           MODEL_CONFIG
         );
-        
+
         // Тестовый запуск для инициализации
-        const dummyCanvas = document.createElement('canvas');
+        const dummyCanvas = document.createElement("canvas");
         dummyCanvas.width = 640;
         dummyCanvas.height = 480;
         await detector.estimatePoses(dummyCanvas);
-        
+
         detectorRef.current = detector;
-        console.log('MoveNet model preloaded successfully');
+        console.log("MoveNet model preloaded successfully");
       } catch (error) {
-        console.error('Error preloading model:', error);
+        console.error("Error preloading model:", error);
       }
     };
 
@@ -261,11 +284,11 @@ const PosturePage: React.FC = () => {
     const setup = async () => {
       try {
         await requestNotificationPermission();
-        
+
         // Проверяем, что модель уже загружена
         if (!detectorRef.current) {
-          console.log('Waiting for model to load...');
-          await new Promise(resolve => {
+          console.log("Waiting for model to load...");
+          await new Promise((resolve) => {
             const checkModel = () => {
               if (detectorRef.current) {
                 resolve(true);
@@ -276,20 +299,20 @@ const PosturePage: React.FC = () => {
             checkModel();
           });
         }
-        
-        console.log('TensorFlow.js backend:', tf.getBackend());
-        console.log('WebGL context:', tf.backend().gpgpu.gl.canvas);
+
+        console.log("TensorFlow.js backend:", tf.getBackend());
+        console.log("WebGL context:", tf.backend().gpgpu.gl.canvas);
 
         setStatus("running");
 
         intervalId = window.setInterval(async () => {
           if (!isMounted) return;
-          
+
           const webcam = webcamRef.current;
           const canvas = canvasRef.current;
           const detector = detectorRef.current;
           if (!webcam || !webcam.video || !canvas || !detector) return;
-          
+
           const video = webcam.video as HTMLVideoElement;
           if (video.readyState < 2) return;
 
@@ -312,11 +335,15 @@ const PosturePage: React.FC = () => {
           // Логирование производительности каждые 100 кадров
           frameCount++;
           if (frameCount % 100 === 0) {
-            console.log(`Processed ${frameCount} frames, current angle: ${result.angle.toFixed(1)}°`);
+            console.log(
+              `Processed ${frameCount} frames, current angle: ${result.angle.toFixed(
+                1
+              )}°`
+            );
           }
         }, DETECT_INTERVAL_MS);
       } catch (e) {
-        console.error('Setup error:', e);
+        console.error("Setup error:", e);
         setStatus("error");
       }
     };
@@ -327,7 +354,13 @@ const PosturePage: React.FC = () => {
       if (intervalId) window.clearInterval(intervalId);
       detectorRef.current = null;
     };
-  }, [draw, logEvent, notifyIfNeeded, requestNotificationPermission, processPose]);
+  }, [
+    draw,
+    logEvent,
+    notifyIfNeeded,
+    requestNotificationPermission,
+    processPose,
+  ]);
 
   return (
     <div className="grid gap-6">
@@ -347,17 +380,20 @@ const PosturePage: React.FC = () => {
           </span>
           <span className="text-sm text-slate-600">
             Quality:{" "}
-            <span className={`font-semibold ${
-              performance.quality === 'high' ? 'text-green-600' :
-              performance.quality === 'medium' ? 'text-yellow-600' :
-              'text-red-600'
-            }`}>
+            <span
+              className={`font-semibold ${
+                performance.quality === "high"
+                  ? "text-green-600"
+                  : performance.quality === "medium"
+                  ? "text-yellow-600"
+                  : "text-red-600"
+              }`}
+            >
               {performance.quality}
             </span>
           </span>
           <span className="text-sm text-slate-600">
-            FPS:{" "}
-            <span className="font-semibold">{performance.fps}</span>
+            FPS: <span className="font-semibold">{performance.fps}</span>
           </span>
           <span className="ml-auto text-sm">
             Neck angle:{" "}
