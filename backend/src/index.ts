@@ -1,68 +1,82 @@
-import express, { Request, Response } from 'express';
+import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
+import dotenv from 'dotenv';
+import { sequelize } from './models';
+import { GamificationService } from './services/gamification';
 
-type PostureEvent = {
-  timestamp: number;
-  status: 'good' | 'bad';
-  metric?: {
-    neckAngleDeg?: number;
-  };
-};
-
-type BlinkEvent = {
-  timestamp: number;
-  blinksPerMin?: number;
-};
+// Загружаем переменные окружения
+dotenv.config();
 
 const app = express();
-const port = Number(process.env.PORT || 4000);
+const PORT = process.env.PORT || 3001;
 
+// Middleware
 app.use(cors());
+app.use(morgan('combined'));
 app.use(express.json());
-app.use(morgan('dev'));
 
-const postureEvents: PostureEvent[] = [];
-const blinkEvents: BlinkEvent[] = [];
+// Типы для событий
+interface PostureEvent {
+  timestamp: number;
+  isGoodPosture: boolean;
+  userId?: number;
+}
 
-app.get('/api/health', (_req: Request, res: Response) => {
-  res.json({ ok: true, service: 'posture-backend', time: Date.now() });
+interface BlinkEvent {
+  timestamp: number;
+  userId?: number;
+}
+
+// Роуты
+import authRoutes from './routes/auth';
+import gamificationRoutes from './routes/gamification';
+
+app.use('/api/auth', authRoutes);
+app.use('/api/gamification', gamificationRoutes);
+
+// Health check
+app.get('/health', (req, res) => {
+  res.json({ status: 'OK', timestamp: new Date().toISOString() });
 });
 
-app.post('/api/posture', (req: Request, res: Response) => {
-  const event = req.body as Partial<PostureEvent>;
-  if (!event || (event.status !== 'good' && event.status !== 'bad')) {
-    return res.status(400).json({ error: 'invalid event' });
+// События осанки
+app.post('/api/posture', (req, res) => {
+  const event: PostureEvent = req.body;
+  console.log('Posture event:', event);
+  res.json({ message: 'Posture event recorded' });
+});
+
+// События моргания
+app.post('/api/blink', (req, res) => {
+  const event: BlinkEvent = req.body;
+  console.log('Blink event:', event);
+  res.json({ message: 'Blink event recorded' });
+});
+
+// Запуск сервера
+const startServer = async () => {
+  try {
+    // Подключение к PostgreSQL
+    await sequelize.authenticate();
+    console.log('Connected to PostgreSQL');
+
+    // Синхронизация моделей с базой данных
+    await sequelize.sync({ alter: true });
+    console.log('Database synchronized');
+
+    // Инициализируем достижения при запуске
+    await GamificationService.initializeAchievements();
+
+    app.listen(PORT, () => {
+      console.log(`Server is running on port ${PORT}`);
+    });
+  } catch (error) {
+    console.error('Database connection error:', error);
+    process.exit(1);
   }
-  const normalized: PostureEvent = {
-    timestamp: Date.now(),
-    status: event.status,
-    metric: event.metric,
-  };
-  postureEvents.push(normalized);
-  if (postureEvents.length > 5000) postureEvents.shift();
-  res.status(201).json({ ok: true });
-});
+};
 
-app.get('/api/posture-events', (_req: Request, res: Response) => {
-  res.json({ events: postureEvents });
-});
-
-app.post('/api/blink-events', (req: Request, res: Response) => {
-  const { blinksPerMin } = req.body || {};
-  const event: BlinkEvent = { timestamp: Date.now(), blinksPerMin };
-  blinkEvents.push(event);
-  if (blinkEvents.length > 5000) blinkEvents.shift();
-  res.status(201).json({ ok: true });
-});
-
-app.get('/api/blink-events', (_req: Request, res: Response) => {
-  res.json({ events: blinkEvents });
-});
-
-app.listen(port, () => {
-  // eslint-disable-next-line no-console
-  console.log(`Backend listening on http://localhost:${port}`);
-});
+startServer();
 
 

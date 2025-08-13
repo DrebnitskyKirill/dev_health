@@ -5,16 +5,18 @@ const DashboardPage = lazy(() => import("../../pages/dashboard/DashboardPage"));
 const PosturePage = lazy(() => import("../../pages/posture/PosturePage"));
 const VisionPage = lazy(() => import("../../pages/vision/VisionPage"));
 const WorkModePage = lazy(() => import("../../pages/workmode/WorkModePage"));
-const SettingsPage = lazy(() => import("../../pages/settings/SettingsPage"));
+const LoginPage = lazy(() => import("../../pages/auth/LoginPage"));
+const ProfilePage = lazy(() => import("../../pages/profile/ProfilePage"));
 
 export const AppRoutes: React.FC = () => (
-  <Suspense fallback={<div className="p-8 text-center">Загрузка...</div>}>
+  <Suspense fallback={<div className="p-8 text-center">Loading...</div>}>
     <Routes>
       <Route path="/" element={<DashboardPage />} />
+      <Route path="/auth" element={<LoginPage />} />
       <Route path="/posture" element={<PosturePage />} />
       <Route path="/vision" element={<VisionPage />} />
       <Route path="/workmode" element={<WorkModePage />} />
-      <Route path="/settings" element={<SettingsPage />} />
+      <Route path="/profile" element={<ProfilePage />} />
     </Routes>
   </Suspense>
 ); 

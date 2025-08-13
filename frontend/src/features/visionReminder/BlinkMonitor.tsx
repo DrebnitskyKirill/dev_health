@@ -1,8 +1,14 @@
-import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import Webcam from 'react-webcam';
-import * as tf from '@tensorflow/tfjs';
-import '@tensorflow/tfjs-backend-webgl';
-import * as faceLandmarksDetection from '@tensorflow-models/face-landmarks-detection';
+import React, {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
+import Webcam from "react-webcam";
+import * as tf from "@tensorflow/tfjs";
+import "@tensorflow/tfjs-backend-webgl";
+import * as faceLandmarksDetection from "@tensorflow-models/face-landmarks-detection";
 
 const VIDEO_WIDTH = 480;
 const VIDEO_HEIGHT = 360;
@@ -21,14 +27,19 @@ function computeEAR(eye: Array<{ x: number; y: number }>) {
 
 export const BlinkMonitor: React.FC = () => {
   const webcamRef = useRef<Webcam | null>(null);
-  const detectorRef = useRef<faceLandmarksDetection.FaceLandmarksDetector | null>(null);
+  const detectorRef =
+    useRef<faceLandmarksDetection.FaceLandmarksDetector | null>(null);
   const [ear, setEar] = useState(0);
   const [blinksPerMin, setBlinksPerMin] = useState(0);
   const [isClosed, setIsClosed] = useState(false);
-  const [status, setStatus] = useState<'idle' | 'running' | 'error'>('idle');
+  const [status, setStatus] = useState<"idle" | "running" | "error">("idle");
 
   const videoConstraints = useMemo(
-    () => ({ width: VIDEO_WIDTH, height: VIDEO_HEIGHT, facingMode: 'user' as const }),
+    () => ({
+      width: VIDEO_WIDTH,
+      height: VIDEO_HEIGHT,
+      facingMode: "user" as const,
+    }),
     []
   );
 
@@ -39,32 +50,39 @@ export const BlinkMonitor: React.FC = () => {
 
     const setup = async () => {
       try {
-        await tf.setBackend('webgl');
+        await tf.setBackend("webgl");
         await tf.ready();
         const detector = await faceLandmarksDetection.createDetector(
           faceLandmarksDetection.SupportedModels.MediaPipeFaceMesh,
           {
-            runtime: 'mediapipe',
+            runtime: "mediapipe",
             refineLandmarks: true,
-            solutionPath: 'https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh',
+            solutionPath: "https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh",
           } as faceLandmarksDetection.MediaPipeFaceMeshMediaPipeModelConfig
         );
         detectorRef.current = detector;
-        setStatus('running');
+        setStatus("running");
 
         intervalId = window.setInterval(async () => {
           const webcam = webcamRef.current;
           if (!webcam || !webcam.video) return;
           const video = webcam.video as HTMLVideoElement;
           if (video.readyState < 2) return;
-          const faces = await detector.estimateFaces(video, { flipHorizontal: true });
+          const faces = await detector.estimateFaces(video, {
+            flipHorizontal: true,
+          });
           const face = faces?.[0];
           if (!face || !face.keypoints) return;
 
           // Индексы глаз в MediaPipe FaceMesh
           const leftIdx = [33, 160, 158, 133, 153, 144];
           const rightIdx = [362, 385, 387, 263, 373, 380];
-          const pts = face.keypoints as Array<{ x: number; y: number; z?: number; name?: string }>;
+          const pts = face.keypoints as Array<{
+            x: number;
+            y: number;
+            z?: number;
+            name?: string;
+          }>;
           const leftEye = leftIdx.map((i) => ({ x: pts[i].x, y: pts[i].y }));
           const rightEye = rightIdx.map((i) => ({ x: pts[i].x, y: pts[i].y }));
           const earLeft = computeEAR(leftEye);
@@ -86,20 +104,21 @@ export const BlinkMonitor: React.FC = () => {
           windowTicks.push(now);
           // чистка окна 60 сек
           windowTicks = windowTicks.filter((t) => now - t <= WINDOW_SEC * 1000);
-          const bpm = (blinkCount / Math.max(1, (windowTicks.length * SAMPLE_MS) / 60000));
+          const bpm =
+            blinkCount / Math.max(1, (windowTicks.length * SAMPLE_MS) / 60000);
           setBlinksPerMin(Math.round(bpm));
 
           // отправка события раз в ~5 секунд
           if (now % 5000 < SAMPLE_MS) {
-            fetch('/api/blink-events', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+            fetch("/api/blink-events", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
               body: JSON.stringify({ blinksPerMin: Math.round(bpm) }),
             }).catch(() => void 0);
           }
         }, SAMPLE_MS);
       } catch (e) {
-        setStatus('error');
+        setStatus("error");
       }
     };
 
@@ -112,13 +131,22 @@ export const BlinkMonitor: React.FC = () => {
 
   return (
     <div className="grid gap-3">
-      <div className="text-sm">Статус: {status}</div>
-      <div className="text-sm">EAR: {ear.toFixed(3)} | Морг/мин: {blinksPerMin}</div>
-      <div className="relative rounded-2xl overflow-hidden border border-slate-200" style={{ width: VIDEO_WIDTH, height: VIDEO_HEIGHT }}>
-        <Webcam ref={webcamRef} audio={false} mirrored videoConstraints={videoConstraints} style={{ width: VIDEO_WIDTH, height: VIDEO_HEIGHT }} />
+      <div className="text-sm">Status: {status}</div>
+      <div className="text-sm">
+        EAR: {ear.toFixed(3)} | Morgue/min: {blinksPerMin}
+      </div>
+      <div
+        className="relative rounded-2xl overflow-hidden border border-slate-200"
+        style={{ width: VIDEO_WIDTH, height: VIDEO_HEIGHT }}
+      >
+        <Webcam
+          ref={webcamRef}
+          audio={false}
+          mirrored
+          videoConstraints={videoConstraints}
+          style={{ width: VIDEO_WIDTH, height: VIDEO_HEIGHT }}
+        />
       </div>
     </div>
   );
 };
-
-
