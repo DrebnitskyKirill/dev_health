@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { Card } from "../../shared/ui/Card";
 import { useAuth } from "../../shared/context/AuthContext";
 import { useLanguage } from "../../shared/context/LanguageContext";
+import { API_BASE_URL } from "../../shared/config";
 
 interface SubscriptionPlan {
   id: string;
@@ -54,7 +55,7 @@ const SubscriptionPage: React.FC = () => {
   const fetchPlans = async () => {
     try {
       const response = await fetch(
-        "http://localhost:3001/api/subscription/plans"
+        `${API_BASE_URL}/subscription/plans`
       );
       const data = await response.json();
       setPlans(data.plans);
@@ -81,7 +82,7 @@ const SubscriptionPage: React.FC = () => {
       if (!token) return;
 
       const response = await fetch(
-        "http://localhost:3001/api/subscription/current",
+        `${API_BASE_URL}/subscription/current`,
         {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -108,7 +109,7 @@ const SubscriptionPage: React.FC = () => {
         const token = localStorage.getItem("token");
 
         const response = await fetch(
-          "http://localhost:3001/api/subscription/subscribe",
+          `${API_BASE_URL}/subscription/subscribe`,
           {
             method: "POST",
             headers: {
@@ -153,7 +154,7 @@ const SubscriptionPage: React.FC = () => {
       const token = localStorage.getItem("token");
 
       const response = await fetch(
-        "http://localhost:3001/api/subscription/cancel",
+        `${API_BASE_URL}/subscription/cancel`,
         {
           method: "POST",
           headers: {
@@ -406,49 +407,28 @@ const SubscriptionPage: React.FC = () => {
                 {t("subscription.payment.method")}:
               </p>
               <div className="space-y-2">
-                {userCountry === "RU" && (
-                  <>
-                    <label className="flex items-center">
-                      <input
-                        type="radio"
-                        name="payment"
-                        value="sbp"
-                        className="mr-2"
-                        checked={selectedPaymentMethod === "sbp"}
-                        onChange={(e) =>
-                          setSelectedPaymentMethod(e.target.value)
-                        }
-                      />
-                      <span>{t("payment.sbp")}</span>
-                    </label>
-                    <label className="flex items-center">
-                      <input
-                        type="radio"
-                        name="payment"
-                        value="yoomoney"
-                        className="mr-2"
-                        checked={selectedPaymentMethod === "yoomoney"}
-                        onChange={(e) =>
-                          setSelectedPaymentMethod(e.target.value)
-                        }
-                      />
-                      <span>{t("payment.yoomoney")}</span>
-                    </label>
-                    <label className="flex items-center">
-                      <input
-                        type="radio"
-                        name="payment"
-                        value="yookassa"
-                        className="mr-2"
-                        checked={selectedPaymentMethod === "yookassa"}
-                        onChange={(e) =>
-                          setSelectedPaymentMethod(e.target.value)
-                        }
-                      />
-                      <span>{t("payment.yookassa")}</span>
-                    </label>
-                  </>
-                )}
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="payment"
+                    value="qiwi"
+                    className="mr-2"
+                    checked={selectedPaymentMethod === "qiwi"}
+                    onChange={(e) => setSelectedPaymentMethod(e.target.value)}
+                  />
+                  <span>QIWI</span>
+                </label>
+                <label className="flex items-center">
+                  <input
+                    type="radio"
+                    name="payment"
+                    value="yoomoney"
+                    className="mr-2"
+                    checked={selectedPaymentMethod === "yoomoney"}
+                    onChange={(e) => setSelectedPaymentMethod(e.target.value)}
+                  />
+                  <span>{t("payment.yoomoney")}</span>
+                </label>
                 <label className="flex items-center">
                   <input
                     type="radio"
@@ -475,13 +455,10 @@ const SubscriptionPage: React.FC = () => {
                   try {
                     if (!selectedPlan) return;
                     const token = localStorage.getItem("token");
-                    const methodForBackend =
-                      selectedPaymentMethod === "yookassa"
-                        ? "card"
-                        : selectedPaymentMethod;
+                        const methodForBackend = selectedPaymentMethod;
                     const currency = userCountry === "RU" ? "RUB" : "USD";
                     const response = await fetch(
-                      "http://localhost:3001/api/subscription/payment/create",
+                      `${API_BASE_URL}/subscription/payment/create`,
                       {
                         method: "POST",
                         headers: {
@@ -501,15 +478,12 @@ const SubscriptionPage: React.FC = () => {
                       alert(`Error: ${data.message || "Payment failed"}`);
                       return;
                     }
-                    setCurrentPlan(data.subscription);
-                    if (user) {
-                      updateUser({
-                        ...user,
-                        subscriptionPlanId: data.subscription.planId,
-                      });
+                    if (data.payment?.redirectUrl) {
+                      window.location.href = data.payment.redirectUrl;
+                    } else {
+                      alert("Payment created");
+                      setShowPaymentModal(false);
                     }
-                    alert(data.message || "Subscription activated");
-                    setShowPaymentModal(false);
                   } catch (err) {
                     console.error("Payment error:", err);
                     alert("Payment failed");

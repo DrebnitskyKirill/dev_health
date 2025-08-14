@@ -239,6 +239,10 @@ const translations = {
     'achievements.yourProfile': 'Your Profile',
     'achievements.yourBadges': 'Your Badges',
     'achievements.earnedAchievements': 'Earned Achievements',
+    'achievements.rarity.common': 'Common',
+    'achievements.rarity.rare': 'Rare',
+    'achievements.rarity.epic': 'Epic',
+    'achievements.rarity.legendary': 'Legendary',
 
     // Leaderboard
     'leaderboard.title': 'Health Leaderboard',
@@ -494,6 +498,10 @@ const translations = {
     'achievements.yourProfile': 'Ваш профиль',
     'achievements.yourBadges': 'Ваши значки',
     'achievements.earnedAchievements': 'Полученные достижения',
+    'achievements.rarity.common': 'Обычное',
+    'achievements.rarity.rare': 'Редкое',
+    'achievements.rarity.epic': 'Эпическое',
+    'achievements.rarity.legendary': 'Легендарное',
 
     // Leaderboard
     'leaderboard.title': 'Рейтинг здоровья',

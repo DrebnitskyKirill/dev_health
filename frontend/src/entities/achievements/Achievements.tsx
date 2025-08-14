@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { API_BASE_URL } from '../../shared/config';
 import { useAuth } from '../../shared/context/AuthContext';
 import { Card } from '../../shared/ui/Card';
 
@@ -36,7 +37,7 @@ export const Achievements: React.FC = () => {
   const fetchUserAchievements = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('http://localhost:3001/api/gamification/user-achievements', {
+      const response = await fetch(`${API_BASE_URL}/gamification/user-achievements`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },

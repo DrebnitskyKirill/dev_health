@@ -1,5 +1,4 @@
 import express from 'express';
-import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import User from '../models/User';
 import { NotificationService } from '../services/notification';
@@ -23,7 +22,7 @@ router.post('/register', async (req, res) => {
     }
 
     // Хешируем пароль
-    const hashedPassword = await bcrypt.hash(password, 10);
+    const hashedPassword = await User.hashPassword(password);
 
     // Создаем пользователя
     const user = await User.create({

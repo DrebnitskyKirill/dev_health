@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '../../../shared/context/AuthContext';
+import { LanguageProvider } from '../../../shared/context/LanguageContext';
 import { VisionReminder } from '../VisionReminder';
 
 // Mock fetch
@@ -18,9 +19,11 @@ Object.defineProperty(window, 'Notification', {
 const renderWithProviders = (component: React.ReactElement) => {
   return render(
     <BrowserRouter>
-      <AuthProvider>
-        {component}
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          {component}
+        </AuthProvider>
+      </LanguageProvider>
     </BrowserRouter>
   );
 };
@@ -175,7 +178,8 @@ describe('VisionReminder', () => {
     const startButton = screen.getByText('Start');
     fireEvent.click(startButton);
 
-    expect(localStorage.setItem).toHaveBeenCalledWith(
+    const setItemSpy = jest.spyOn(localStorage.__proto__, 'setItem');
+    expect(setItemSpy).toHaveBeenCalledWith(
       'visionReminderState',
       expect.stringContaining('"isActive":true')
     );

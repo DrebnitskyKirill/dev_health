@@ -20,7 +20,7 @@ export class NotificationService {
   constructor() {
     // Создаем транспортер для отправки email
     // В продакшене здесь будут реальные SMTP настройки
-    this.transporter = nodemailer.createTransporter({
+    this.transporter = nodemailer.createTransport({
       host: process.env.SMTP_HOST || 'smtp.gmail.com',
       port: parseInt(process.env.SMTP_PORT || '587'),
       secure: false, // true для 465, false для других портов

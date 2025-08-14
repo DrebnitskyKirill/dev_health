@@ -88,13 +88,15 @@ global.fetch = jest.fn((url: string) => {
     return Promise.resolve({
       ok: true,
       json: () => Promise.resolve({
-        id: 1,
-        email: 'test@test.com',
-        username: 'testuser',
-        healthScore: 100,
-        level: 5,
-        experience: 250,
-        badges: ['first-badge', 'second-badge']
+        user: {
+          id: 1,
+          email: 'test@test.com',
+          username: 'testuser',
+          healthScore: 100,
+          level: 5,
+          experience: 250,
+          badges: ['first-badge', 'second-badge']
+        }
       })
     });
   }

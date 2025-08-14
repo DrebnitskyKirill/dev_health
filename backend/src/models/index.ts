@@ -2,6 +2,7 @@ import sequelize from "../config/database";
 import User from "./User";
 import Achievement, { UserAchievement, UserStatistics } from "./Achievement";
 import UserSubscription, { SUBSCRIPTION_PLANS } from "./Subscription";
+import Payment from "./Payment";
 
 // Определяем связи
 User.hasMany(UserAchievement, { foreignKey: "userId" });
@@ -16,4 +17,7 @@ UserStatistics.belongsTo(User, { foreignKey: "userId" });
 User.hasOne(UserSubscription, { foreignKey: "userId" });
 UserSubscription.belongsTo(User, { foreignKey: "userId" });
 
-export { User, Achievement, UserAchievement, UserStatistics, UserSubscription, SUBSCRIPTION_PLANS, sequelize };
+User.hasMany(Payment, { foreignKey: "userId" });
+Payment.belongsTo(User, { foreignKey: "userId" });
+
+export { User, Achievement, UserAchievement, UserStatistics, UserSubscription, SUBSCRIPTION_PLANS, Payment, sequelize };

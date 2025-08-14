@@ -2,6 +2,7 @@ import React from 'react';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '../../../shared/context/AuthContext';
+import { LanguageProvider } from '../../../shared/context/LanguageContext';
 import ProfilePage from '../ProfilePage';
 
 const mockFetch = jest.fn();
@@ -10,9 +11,11 @@ global.fetch = mockFetch;
 const renderWithProviders = (component: React.ReactElement) => {
   return render(
     <BrowserRouter>
-      <AuthProvider>
-        {component}
-      </AuthProvider>
+      <LanguageProvider>
+        <AuthProvider>
+          {component}
+        </AuthProvider>
+      </LanguageProvider>
     </BrowserRouter>
   );
 };

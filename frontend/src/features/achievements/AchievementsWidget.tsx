@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../shared/context/AuthContext';
 import { useLanguage } from '../../shared/context/LanguageContext';
+import { API_BASE_URL } from '../../shared/config';
 import { Card } from '../../shared/ui/Card';
 
 interface Achievement {
@@ -25,7 +26,7 @@ interface UserAchievements {
 
 export const AchievementsWidget: React.FC = () => {
   const { user, token } = useAuth();
-  const { t } = useLanguage();
+  const { t, language } = useLanguage();
   const [userAchievements, setUserAchievements] = useState<UserAchievements | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -38,15 +39,18 @@ export const AchievementsWidget: React.FC = () => {
   const fetchUserAchievements = async () => {
     try {
       setIsLoading(true);
-      const response = await fetch('http://localhost:3001/api/gamification/user-achievements', {
+      const response = await fetch(`${API_BASE_URL}/gamification/user-achievements`, {
         headers: {
           'Authorization': `Bearer ${token}`,
         },
       });
 
-      if (response.ok) {
+      if (response && response.ok) {
         const data = await response.json();
         setUserAchievements(data);
+      } else {
+        // Неуспешный ответ сервера
+        console.error('Error fetching achievements: bad response');
       }
     } catch (error) {
       console.error('Error fetching achievements:', error);
@@ -56,17 +60,6 @@ export const AchievementsWidget: React.FC = () => {
   };
 
   if (!user) return null;
-
-  if (isLoading) {
-    return (
-      <Card>
-        <div className="animate-pulse" data-testid="loading-skeleton">
-          <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
-          <div className="h-20 bg-gray-200 rounded"></div>
-        </div>
-      </Card>
-    );
-  }
 
   const getRarityColor = (rarity: string) => {
     switch (rarity) {
@@ -80,12 +73,18 @@ export const AchievementsWidget: React.FC = () => {
 
   const getRarityLabel = (rarity: string) => {
     switch (rarity) {
-      case 'common': return 'Common';
-      case 'rare': return 'Rare';
-      case 'epic': return 'Epic';
-      case 'legendary': return 'Legendary';
-      default: return 'Common';
+      case 'common': return t('achievements.rarity.common');
+      case 'rare': return t('achievements.rarity.rare');
+      case 'epic': return t('achievements.rarity.epic');
+      case 'legendary': return t('achievements.rarity.legendary');
+      default: return t('achievements.rarity.common');
     }
+  };
+
+  const formatDate = (iso: string) => {
+    const locale = language === 'ru' ? 'ru-RU' : 'en-US';
+    const date = new Date(iso);
+    return new Intl.DateTimeFormat(locale, { year: 'numeric', month: 'short', day: 'numeric' }).format(date);
   };
 
   return (
@@ -103,11 +102,11 @@ export const AchievementsWidget: React.FC = () => {
             <div className="text-sm text-gray-500">{t('dashboard.healthPoints')}</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-green-600">{user.badges?.length || 0}</div>
+            <div className="text-2xl font-bold text-green-600">{(userAchievements?.badges?.length ?? user.badges?.length) || 0}</div>
             <div className="text-sm text-gray-500">{t('dashboard.badges')}</div>
           </div>
           <div className="text-center">
-            <div className="text-2xl font-bold text-purple-600">{userAchievements?.achievements.length || 0}</div>
+            <div className="text-2xl font-bold text-purple-600">{(userAchievements?.achievements.length || 0)}×</div>
             <div className="text-sm text-gray-500">{t('dashboard.achievements')}</div>
           </div>
         </div>
@@ -146,8 +145,17 @@ export const AchievementsWidget: React.FC = () => {
         </Card>
       )}
 
-      {/* Достижения */}
-      {userAchievements?.achievements && userAchievements.achievements.length > 0 && (
+      {/* Достижения: показываем скелетон при загрузке, иначе список */}
+      {isLoading && (
+        <Card>
+          <div className="animate-pulse" data-testid="loading-skeleton">
+            <div className="h-4 bg-gray-200 rounded w-1/4 mb-4"></div>
+            <div className="h-20 bg-gray-200 rounded"></div>
+          </div>
+        </Card>
+      )}
+
+      {!isLoading && userAchievements?.achievements && userAchievements.achievements.length > 0 && (
         <Card>
           <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('achievements.earnedAchievements')}</h3>
           <div className="space-y-3">
@@ -157,9 +165,9 @@ export const AchievementsWidget: React.FC = () => {
                 <div className="flex-1">
                   <div className="font-medium text-gray-900">{achievement.name}</div>
                   <div className="text-sm text-gray-600">{achievement.description}</div>
-                                     <div className="text-xs text-gray-500 mt-1">
-                     {t('achievements.earned')} {new Date(achievement.earnedAt).toLocaleDateString()}
-                   </div>
+                  <div className="text-xs text-gray-500 mt-1">
+                    {t('achievements.earned')} {formatDate(achievement.earnedAt)}
+                  </div>
                 </div>
                 {achievement.points && (
                   <div className="text-right">

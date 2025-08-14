@@ -40,7 +40,7 @@ const LoginPage: React.FC = () => {
             {isLogin ? t('auth.noAccount') : t('auth.hasAccount')}
             <button
               type="button"
-              className="font-medium text-indigo-600 hover:text-indigo-500"
+              className="font-medium text-indigo-600 hover:text-indigo-500 cursor-pointer ml-2"
               onClick={() => setIsLogin(!isLogin)}
             >
               {isLogin ? t('auth.register') : t('auth.signIn')}

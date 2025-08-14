@@ -3,6 +3,7 @@ import { useAuth } from "../../shared/context/AuthContext";
 import { Card } from "../../shared/ui/Card";
 import { Achievements, Leaderboard } from "../../entities";
 import { useLanguage } from "../../shared/context/LanguageContext";
+import { API_BASE_URL } from "../../shared/config";
 
 const ProfilePage: React.FC = () => {
   const { user, token, updateUser } = useAuth();
@@ -70,7 +71,7 @@ const ProfilePage: React.FC = () => {
     try {
       // Обновляем профиль
       const profileResponse = await fetch(
-        "http://localhost:3001/api/auth/profile",
+        `${API_BASE_URL}/auth/profile`,
         {
           method: "PUT",
           headers: {
@@ -96,7 +97,7 @@ const ProfilePage: React.FC = () => {
       // Если введен новый пароль, меняем его
       if (formData.newPassword && formData.currentPassword) {
         const passwordResponse = await fetch(
-          "http://localhost:3001/api/auth/change-password",
+          `${API_BASE_URL}/auth/change-password`,
           {
             method: "POST",
             headers: {
@@ -195,7 +196,7 @@ const ProfilePage: React.FC = () => {
           throw new Error('Неизвестный тип уведомления');
       }
 
-      const response = await fetch(`http://localhost:3001${endpoint}`, {
+      const response = await fetch(`${API_BASE_URL.replace(/\/api$/, '')}${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

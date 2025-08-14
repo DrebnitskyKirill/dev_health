@@ -6,6 +6,7 @@ import {
 } from "../middleware/subscription";
 import { SUBSCRIPTION_PLANS } from "../models";
 import { PaymentService } from "../services/payment";
+import { Payment } from "../models";
 
 const router = Router();
 
@@ -126,25 +127,9 @@ router.post(
         return res.status(400).json({ message: payment.error || "Payment failed" });
       }
 
-      // In a real flow you'd redirect to payment.redirectUrl
-      // For now, immediately confirm and activate subscription
-      const confirmed = await PaymentService.confirmPayment(payment.paymentId!);
-      if (!confirmed) {
-        return res.status(400).json({ message: "Payment confirmation failed" });
-      }
-
-      const subscription = await SubscriptionService.createSubscription(req.user.id, planId);
-
       res.json({
-        message: "Payment successful and subscription activated",
+        message: "Payment created",
         payment,
-        subscription: {
-          id: subscription.id,
-          planId: subscription.planId,
-          status: subscription.status,
-          startDate: subscription.startDate,
-          endDate: subscription.endDate,
-        },
       });
     } catch (error) {
       console.error("Error creating payment:", error);
@@ -152,6 +137,27 @@ router.post(
     }
   }
 );
+
+// Payment: webhook/return URL to confirm and activate subscription
+router.post('/payment/webhook', async (req: Request, res: Response) => {
+  try {
+    const { paymentId, planId, userId } = (req.body || {}) as any;
+    if (!paymentId || !planId || !userId) return res.status(400).json({ message: 'Invalid payload' });
+    const ok = await PaymentService.confirmPayment(paymentId);
+    if (!ok) return res.status(400).json({ message: 'Payment not confirmed' });
+    const subscription = await SubscriptionService.createSubscription(Number(userId), String(planId));
+    res.json({ message: 'Subscription activated', subscription: {
+      id: subscription.id,
+      planId: subscription.planId,
+      status: subscription.status,
+      startDate: subscription.startDate,
+      endDate: subscription.endDate,
+    }});
+  } catch (e) {
+    console.error('Webhook error', e);
+    res.status(500).json({ message: 'Internal server error' });
+  }
+});
 
 // Отменить подписку
 router.post("/cancel", authAndSubscription, async (req: any, res: Response) => {

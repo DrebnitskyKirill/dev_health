@@ -29,7 +29,7 @@ export class GamificationService {
         include: [{ model: Achievement, as: "achievement" }],
       });
 
-      const earnedAchievementIds = userAchievements.map((ua) => ua.achievementId);
+      const earnedAchievementIds = (userAchievements as any[]).map((ua: any) => ua.achievementId);
       const newAchievements: Achievement[] = [];
       let totalPoints = 0;
 
@@ -76,7 +76,7 @@ export class GamificationService {
   // Проверяем условие достижения
   private static async checkAchievementCondition(
     achievement: Achievement,
-    userStats: UserStatistics,
+    userStats: any,
     user: User
   ): Promise<boolean> {
     const requirements = achievement.requirements;

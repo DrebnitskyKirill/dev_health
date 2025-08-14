@@ -91,40 +91,40 @@ const AppContent = () => {
             </div>
           </Link>
 
-          {user && (
-            <div className="flex items-center gap-3">
-              {/* Language Switcher */}
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => setLanguage("en")}
-                  className={`px-2 py-1 text-xs rounded ${
-                    language === "en"
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  }`}
-                >
-                  EN
-                </button>
-                <button
-                  onClick={() => setLanguage("ru")}
-                  className={`px-2 py-1 text-xs rounded ${
-                    language === "ru"
-                      ? "bg-blue-600 text-white"
-                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
-                  }`}
-                >
-                  RU
-                </button>
-              </div>
+          <div className="flex items-center gap-3">
+            {/* Language Switcher */}
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setLanguage("en")}
+                className={`px-2 py-1 text-xs rounded ${
+                  language === "en"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
+              >
+                EN
+              </button>
+              <button
+                onClick={() => setLanguage("ru")}
+                className={`px-2 py-1 text-xs rounded ${
+                  language === "ru"
+                    ? "bg-blue-600 text-white"
+                    : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                }`}
+              >
+                RU
+              </button>
+            </div>
 
+            {user && (
               <button
                 onClick={logout}
                 className="px-4 py-2 text-sm text-blue-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
               >
                 {t("auth.logout")}
               </button>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </header>
 

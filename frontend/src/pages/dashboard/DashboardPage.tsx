@@ -3,8 +3,6 @@ import { useNavigate } from "react-router-dom";
 import { useAuth } from "../../shared/context/AuthContext";
 import { useLanguage } from "../../shared/context/LanguageContext";
 import { Card } from "../../shared/ui/Card";
-import { AchievementsWidget } from "../../features/achievements/AchievementsWidget";
-import { LeaderboardWidget } from "../../features/leaderboard/LeaderboardWidget";
 
 const DashboardPage: React.FC = () => {
   const navigate = useNavigate();

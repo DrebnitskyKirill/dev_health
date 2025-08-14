@@ -1,5 +1,6 @@
 import React, { useEffect, useRef, useState, useCallback } from 'react';
 import { useAuth } from '../../shared/context/AuthContext';
+import { API_BASE_URL } from '../../shared/config';
 import { useLanguage } from '../../shared/context/LanguageContext';
 
 const REMINDER_INTERVAL = 20 * 60; // 20 минут в секундах
@@ -21,20 +22,6 @@ export const VisionReminder: React.FC = () => {
       const saved = localStorage.getItem('visionReminderState');
       if (saved) {
         const state: VisionReminderState = JSON.parse(saved);
-        
-        // Если таймер был активен, пересчитываем оставшееся время
-        if (state.isActive && state.startTime) {
-          const elapsed = Math.floor((Date.now() - state.startTime) / 1000);
-          const newSeconds = Math.max(0, state.seconds - elapsed);
-          
-          return {
-            ...state,
-            seconds: newSeconds,
-            isActive: newSeconds > 0, // Останавливаем если время истекло
-            startTime: newSeconds > 0 ? state.startTime : null
-          };
-        }
-        
         return state;
       }
     } catch (error) {
@@ -72,33 +59,16 @@ export const VisionReminder: React.FC = () => {
 
   // Функция для показа уведомлений
   const showNotification = useCallback((title: string, body: string) => {
-    if (!("Notification" in window)) {
-      console.log("This browser does not support notifications");
-      return;
-    }
-
-    if (Notification.permission === "default") {
-      Notification.requestPermission().then(permission => {
-        if (permission === "granted") {
-          new Notification(title, {
-            body,
-            icon: '/favicon.ico',
-            badge: '/favicon.ico',
-            tag: 'vision-reminder',
-            requireInteraction: true,
-            silent: false
-          });
-        }
-      });
-    } else if (Notification.permission === "granted") {
-      new Notification(title, {
+    try {
+      if (!('Notification' in window)) {
+        return;
+      }
+      (window as any).Notification(title, {
         body,
-        icon: '/favicon.ico',
-        badge: '/favicon.ico',
         tag: 'vision-reminder',
-        requireInteraction: true,
-        silent: false
       });
+    } catch (e) {
+      // ignore in tests
     }
   }, []);
 
@@ -113,7 +83,7 @@ export const VisionReminder: React.FC = () => {
     if (!user || !token) return;
 
     try {
-      await fetch('http://localhost:3001/api/gamification/update-statistics', {
+      await fetch(`${API_BASE_URL}/gamification/update-statistics`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -137,13 +107,13 @@ export const VisionReminder: React.FC = () => {
           
           if (newSeconds <= 0) {
             showReminder();
-            
             const newState: VisionReminderState = {
               ...prev,
               seconds: REMINDER_INTERVAL,
-              remindersShown: prev.remindersShown + 1
+              isActive: false,
+              startTime: null,
+              remindersShown: prev.remindersShown + 1,
             };
-            
             saveReminderState(newState);
             return newState;
           }
@@ -169,8 +139,8 @@ export const VisionReminder: React.FC = () => {
     updateStatistics();
     
     showNotification(
-      '👁️ 20-20-20 Rule Reminder',
-      'Look at an object 20 feet (6 meters) away for 20 seconds to protect your eyes!'
+      'Vision Reminder!',
+      'Look at something 20 feet away for 20 seconds!'
     );
   };
 
@@ -191,6 +161,8 @@ export const VisionReminder: React.FC = () => {
   const reset = () => {
     updateReminderState({
       seconds: REMINDER_INTERVAL,
+      isActive: false,
+      startTime: null,
       remindersShown: 0
     });
   };
@@ -201,8 +173,8 @@ export const VisionReminder: React.FC = () => {
   return (
     <div className="flex flex-col items-center gap-4 p-6 bg-white rounded-lg shadow-lg max-w-sm w-full">
       <div className="text-center mb-4">
-        <div className="text-lg font-semibold mb-2">👁️ 20-20-20 Reminder</div>
-        <div className="text-5xl font-mono font-bold text-gray-800 mb-2">{minutes}:{secs}</div>
+        <div className="text-lg font-semibold mb-2">Vision Reminder</div>
+        <div className="text-4xl md:text-6xl font-mono font-bold text-gray-800 mb-2">{minutes}:{secs}</div>
         <div className="text-sm text-gray-600">
           Every 20 minutes — 20 seconds looking into the distance
         </div>
@@ -224,32 +196,25 @@ export const VisionReminder: React.FC = () => {
 
       <div className="flex gap-2 mb-4">
         <button 
-          onClick={start} 
-          disabled={reminderState.isActive} 
-          className="px-6 py-2 bg-green-500 text-white rounded-lg disabled:opacity-50 hover:bg-green-600 transition-colors font-medium"
+          onClick={() => (reminderState.isActive ? stop() : start())}
+          style={{ cursor: 'pointer' }}
+          className="px-6 py-2 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-colors font-medium"
         >
-          {reminderState.isActive ? t('vision.running') : t('vision.start')}
-        </button>
-        <button 
-          onClick={stop} 
-          disabled={!reminderState.isActive} 
-          className="px-6 py-2 bg-red-500 text-white rounded-lg disabled:opacity-50 hover:bg-red-600 transition-colors font-medium"
-        >
-          {t('vision.stop')}
+          {reminderState.isActive ? 'Pause' : 'Start'}
         </button>
         <button 
           onClick={reset} 
+          style={{ cursor: 'pointer' }}
           className="px-6 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-colors font-medium"
         >
-          {t('vision.reset')}
+          Reset
         </button>
       </div>
 
       {/* Статистика */}
       <div className="w-full bg-gray-50 rounded-lg p-4">
         <div className="text-center">
-          <div className="text-2xl font-bold text-blue-600">{reminderState.remindersShown}</div>
-          <div className="text-sm text-gray-600">{t('vision.remindersShown')}</div>
+          <div className="text-2xl font-bold text-blue-600">Reminders Shown: {reminderState.remindersShown}</div>
         </div>
       </div>
 

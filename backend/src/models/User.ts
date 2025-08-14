@@ -1,4 +1,4 @@
-import { Model, DataTypes, Sequelize } from 'sequelize';
+import { Model, DataTypes, Sequelize, Optional } from 'sequelize';
 import sequelize from '../config/database';
 import bcrypt from 'bcryptjs';
 
@@ -16,6 +16,8 @@ export interface IUser {
   updatedAt: Date;
 }
 
+export type IUserCreationAttributes = Optional<IUser, 'id' | 'createdAt' | 'updatedAt' | 'subscriptionPlanId'>;
+
 export interface IUserStatistics {
   totalWorkTime: number;
   goodPostureTime: number;
@@ -25,7 +27,7 @@ export interface IUserStatistics {
   lastPostureCheck: Date;
 }
 
-class User extends Model<IUser> implements IUser {
+class User extends Model<IUser, IUserCreationAttributes> implements IUser {
   public id!: number;
   public email!: string;
   public password!: string;
