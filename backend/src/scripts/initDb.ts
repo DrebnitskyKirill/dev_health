@@ -1,6 +1,6 @@
 import dotenv from 'dotenv';
 import { Sequelize } from 'sequelize';
-import { Achievement } from '../models';
+import { Achievement, UserSubscription } from '../models';
 import { defaultAchievements } from '../models/defaultAchievements';
 
 dotenv.config();

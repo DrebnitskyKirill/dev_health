@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../shared/context/AuthContext';
+import { useLanguage } from '../../shared/context/LanguageContext';
 import { Card } from '../../shared/ui/Card';
 
 interface Achievement {
@@ -24,6 +25,7 @@ interface UserAchievements {
 
 export const AchievementsWidget: React.FC = () => {
   const { user, token } = useAuth();
+  const { t } = useLanguage();
   const [userAchievements, setUserAchievements] = useState<UserAchievements | null>(null);
   const [isLoading, setIsLoading] = useState(false);
 
@@ -91,29 +93,29 @@ export const AchievementsWidget: React.FC = () => {
       {/* Статистика пользователя */}
       <Card>
         <div className="flex items-center justify-between mb-4">
-          <h3 className="text-lg font-semibold text-gray-900">Your Profile</h3>
-          <div className="text-sm text-gray-500">Level {user.level}</div>
+          <h3 className="text-lg font-semibold text-gray-900">{t('achievements.yourProfile')}</h3>
+          <div className="text-sm text-gray-500">{t('dashboard.level')} {user.level}</div>
         </div>
         
         <div className="grid grid-cols-3 gap-4">
           <div className="text-center">
             <div className="text-2xl font-bold text-indigo-600">{user.healthScore}</div>
-            <div className="text-sm text-gray-500">Health Points</div>
+            <div className="text-sm text-gray-500">{t('dashboard.healthPoints')}</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-green-600">{user.badges?.length || 0}</div>
-            <div className="text-sm text-gray-500">Badges</div>
+            <div className="text-sm text-gray-500">{t('dashboard.badges')}</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-purple-600">{userAchievements?.achievements.length || 0}</div>
-            <div className="text-sm text-gray-500">Achievements</div>
+            <div className="text-sm text-gray-500">{t('dashboard.achievements')}</div>
           </div>
         </div>
 
         {/* Прогресс уровня */}
         <div className="mt-4">
           <div className="flex justify-between text-sm text-gray-500 mb-1">
-            <span>Experience</span>
+            <span>{t('dashboard.experience')}</span>
             <span>{userAchievements?.experience || 0} / {(user.level * 100)}</span>
           </div>
           <div className="w-full bg-gray-200 rounded-full h-2">
@@ -130,7 +132,7 @@ export const AchievementsWidget: React.FC = () => {
       {/* Бейджи */}
       {user.badges && user.badges.length > 0 && (
         <Card>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Your Badges</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('achievements.yourBadges')}</h3>
           <div className="flex flex-wrap gap-2">
             {user.badges.map((badge, index) => (
               <div
@@ -147,7 +149,7 @@ export const AchievementsWidget: React.FC = () => {
       {/* Достижения */}
       {userAchievements?.achievements && userAchievements.achievements.length > 0 && (
         <Card>
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">Earned Achievements</h3>
+          <h3 className="text-lg font-semibold text-gray-900 mb-4">{t('achievements.earnedAchievements')}</h3>
           <div className="space-y-3">
             {userAchievements.achievements.map((achievement, index) => (
               <div key={index} className="flex items-center p-3 bg-gray-50 rounded-lg">
@@ -156,7 +158,7 @@ export const AchievementsWidget: React.FC = () => {
                   <div className="font-medium text-gray-900">{achievement.name}</div>
                   <div className="text-sm text-gray-600">{achievement.description}</div>
                                      <div className="text-xs text-gray-500 mt-1">
-                     Earned {new Date(achievement.earnedAt).toLocaleDateString('en-US')}
+                     {t('achievements.earned')} {new Date(achievement.earnedAt).toLocaleDateString()}
                    </div>
                 </div>
                 {achievement.points && (

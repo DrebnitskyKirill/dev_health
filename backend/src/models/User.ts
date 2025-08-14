@@ -11,6 +11,7 @@ export interface IUser {
   level: number;
   experience: number;
   badges: string[];
+  subscriptionPlanId?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -33,6 +34,7 @@ class User extends Model<IUser> implements IUser {
   public level!: number;
   public experience!: number;
   public badges!: string[];
+  public subscriptionPlanId?: string;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 
@@ -90,6 +92,11 @@ User.init(
       type: DataTypes.ARRAY(DataTypes.STRING),
       allowNull: false,
       defaultValue: [],
+    },
+    subscriptionPlanId: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      defaultValue: 'free',
     },
   } as any,
   {

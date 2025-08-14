@@ -2,6 +2,8 @@ import express from 'express';
 import cors from 'cors';
 import morgan from 'morgan';
 import dotenv from 'dotenv';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import { sequelize } from './models';
 import { GamificationService } from './services/gamification';
 
@@ -11,8 +13,10 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3001;
 
-// Middleware
-app.use(cors());
+// Security & Middleware
+app.use(helmet());
+app.use(cors({ origin: process.env.CORS_ORIGIN || '*' }));
+app.use(rateLimit({ windowMs: 15 * 60 * 1000, max: 100 }));
 app.use(morgan('combined'));
 app.use(express.json());
 
@@ -31,9 +35,13 @@ interface BlinkEvent {
 // Роуты
 import authRoutes from './routes/auth';
 import gamificationRoutes from './routes/gamification';
+import subscriptionRoutes from './routes/subscription';
+import notificationRoutes from './routes/notifications';
 
 app.use('/api/auth', authRoutes);
 app.use('/api/gamification', gamificationRoutes);
+app.use('/api/subscription', subscriptionRoutes);
+app.use('/api/notifications', notificationRoutes);
 
 // Health check
 app.get('/health', (req, res) => {

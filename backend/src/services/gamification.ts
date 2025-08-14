@@ -1,73 +1,119 @@
 import { User, Achievement, UserAchievement, UserStatistics } from '../models';
 import { Op } from 'sequelize';
 import { defaultAchievements } from '../models/defaultAchievements';
+import { NotificationService } from "./notification";
 
 export class GamificationService {
   // Проверка и награждение достижений
-  static async checkAndAwardAchievements(userId: number): Promise<Achievement[]> {
-    const user = await User.findByPk(userId, {
-      include: [
-        {
-          model: UserStatistics,
-          as: 'statistics',
-        },
-        {
-          model: UserAchievement,
-          as: 'userAchievements',
-          include: [Achievement],
-        },
-      ],
-    });
-
-    if (!user || !(user as any).statistics) {
-      return [];
-    }
-
-    const earnedAchievements: Achievement[] = [];
-    const allAchievements = await Achievement.findAll();
-    const userAchievementIds = (user as any).userAchievements?.map((ua: any) => ua.achievementId) || [];
-
-    for (const achievement of allAchievements) {
-      // Проверяем, не получено ли уже достижение
-      if (userAchievementIds.includes(achievement.id)) {
-        continue;
+  static async checkAndAwardAchievements(userId: number): Promise<{
+    newAchievements: Achievement[];
+    totalPoints: number;
+  }> {
+    try {
+      const user = await User.findByPk(userId);
+      if (!user) {
+        throw new Error("User not found");
       }
 
-      // Проверяем требования достижения
-      const requirements = achievement.requirements;
-      let shouldAward = true;
+      const userStats = await UserStatistics.findOne({
+        where: { userId },
+      });
 
-      for (const [key, requiredValue] of Object.entries(requirements)) {
-        const userValue = ((user as any).statistics as any)[key] || 0;
-        
-        if (userValue < requiredValue) {
-          shouldAward = false;
-          break;
+      if (!userStats) {
+        throw new Error("User statistics not found");
+      }
+
+      const allAchievements = await Achievement.findAll();
+      const userAchievements = await UserAchievement.findAll({
+        where: { userId },
+        include: [{ model: Achievement, as: "achievement" }],
+      });
+
+      const earnedAchievementIds = userAchievements.map((ua) => ua.achievementId);
+      const newAchievements: Achievement[] = [];
+      let totalPoints = 0;
+
+      for (const achievement of allAchievements) {
+        if (earnedAchievementIds.includes(achievement.id)) {
+          totalPoints += achievement.points || 0;
+          continue;
+        }
+
+        if (await this.checkAchievementCondition(achievement, userStats, user)) {
+          // Награждаем достижение
+          await UserAchievement.create({
+            userId,
+            achievementId: achievement.id,
+            earnedAt: new Date(),
+          });
+
+          newAchievements.push(achievement);
+          totalPoints += achievement.points || 0;
+
+          // Отправляем email уведомление о достижении
+          try {
+            const notificationService = new NotificationService();
+            await notificationService.sendAchievementEmail(
+              user,
+              achievement.name,
+              achievement.description
+            );
+            console.log(`Achievement notification sent to ${user.email} for ${achievement.name}`);
+          } catch (emailError) {
+            console.error('Error sending achievement notification:', emailError);
+            // Не прерываем процесс, если email не отправился
+          }
         }
       }
 
-      if (shouldAward) {
-        // Награждаем достижением
-        await UserAchievement.create({
-          userId: user.id,
-          achievementId: achievement.id,
-          earnedAt: new Date(),
-        });
+      return { newAchievements, totalPoints };
+    } catch (error) {
+      console.error("Error checking achievements:", error);
+      throw error;
+    }
+  }
 
-        // Обновляем опыт и уровень пользователя
-        const newExperience = user.experience + achievement.points;
-        const newLevel = this.calculateLevel(newExperience);
-        
-        await user.update({
-          experience: newExperience,
-          level: newLevel,
-        });
-
-        earnedAchievements.push(achievement);
+  // Проверяем условие достижения
+  private static async checkAchievementCondition(
+    achievement: Achievement,
+    userStats: UserStatistics,
+    user: User
+  ): Promise<boolean> {
+    const requirements = achievement.requirements;
+    
+    for (const [key, requiredValue] of Object.entries(requirements)) {
+      const userValue = (userStats as any)[key] || 0;
+      
+      if (userValue < requiredValue) {
+        return false;
       }
     }
+    
+    return true;
+  }
 
-    return earnedAchievements;
+  // Обновляем опыт и уровень пользователя
+  static async updateUserProgress(userId: number, points: number): Promise<void> {
+    try {
+      const user = await User.findByPk(userId);
+      if (!user) {
+        throw new Error("User not found");
+      }
+
+      const newExperience = user.experience + points;
+      const newLevel = this.calculateLevel(newExperience);
+      
+      await user.update({
+        experience: newExperience,
+        level: newLevel,
+      });
+
+      // Проверяем новые достижения
+      await this.checkAndAwardAchievements(userId);
+    } catch (error) {
+      console.error("Error updating user progress:", error);
+      throw error;
+    }
   }
 
   // Расчет уровня на основе опыта

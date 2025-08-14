@@ -2,11 +2,16 @@ import React from "react";
 import { BrowserRouter as Router, Link, useLocation } from "react-router-dom";
 import { AppRoutes } from "./routes/routes";
 import { AuthProvider, useAuth } from "../shared/context/AuthContext";
+import {
+  LanguageProvider,
+  useLanguage,
+} from "../shared/context/LanguageContext";
 import "./styles/index.css";
 import { LogoUrl } from "../shared/assets";
 
 const AppContent = () => {
   const { user, logout } = useAuth();
+  const { language, setLanguage, t } = useLanguage();
 
   const Nav = () => {
     const { pathname } = useLocation();
@@ -20,7 +25,7 @@ const AppContent = () => {
           to="/"
           className={`pill ${isActive("/") ? "pill-active" : "pill-muted"}`}
         >
-          Home
+          {t("nav.home")}
         </Link>
         <Link
           to="/posture"
@@ -28,7 +33,7 @@ const AppContent = () => {
             isActive("/posture") ? "pill-active" : "pill-muted"
           }`}
         >
-          Posture
+          {t("nav.posture")}
         </Link>
         <Link
           to="/vision"
@@ -36,7 +41,7 @@ const AppContent = () => {
             isActive("/vision") ? "pill-active" : "pill-muted"
           }`}
         >
-          Vision
+          {t("nav.vision")}
         </Link>
         <Link
           to="/workmode"
@@ -44,7 +49,7 @@ const AppContent = () => {
             isActive("/workmode") ? "pill-active" : "pill-muted"
           }`}
         >
-          Work Mode
+          {t("nav.workmode")}
         </Link>
         <Link
           to="/profile"
@@ -52,7 +57,15 @@ const AppContent = () => {
             isActive("/profile") ? "pill-active" : "pill-muted"
           }`}
         >
-          Profile
+          {t("nav.profile")}
+        </Link>
+        <Link
+          to="/subscription"
+          className={`pill ${
+            isActive("/subscription") ? "pill-active" : "pill-muted"
+          }`}
+        >
+          {t("nav.subscription")}
         </Link>
       </nav>
     );
@@ -70,9 +83,9 @@ const AppContent = () => {
                 className="h-30 w-30 rounded-2xl shadow-glass"
               />
               <div>
-                <div className="text-xl font-bold">Remote Worker Health</div>
+                <div className="text-xl font-bold">{t("app.title")}</div>
                 <div className="text-xs text-slate-500">
-                  Posture, Vision, Work Mode
+                  {t("app.subtitle")}
                 </div>
               </div>
             </div>
@@ -80,17 +93,35 @@ const AppContent = () => {
 
           {user && (
             <div className="flex items-center gap-3">
-              <Link
-                to="/profile"
-                className="text-sm text-gray-600 hover:text-blue-600 transition-colors cursor-pointer"
-              >
-                {user.username}
-              </Link>
+              {/* Language Switcher */}
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setLanguage("en")}
+                  className={`px-2 py-1 text-xs rounded ${
+                    language === "en"
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  }`}
+                >
+                  EN
+                </button>
+                <button
+                  onClick={() => setLanguage("ru")}
+                  className={`px-2 py-1 text-xs rounded ${
+                    language === "ru"
+                      ? "bg-blue-600 text-white"
+                      : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                  }`}
+                >
+                  RU
+                </button>
+              </div>
+
               <button
                 onClick={logout}
                 className="px-4 py-2 text-sm text-blue-600 hover:text-gray-800 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer"
               >
-                Logout
+                {t("auth.logout")}
               </button>
             </div>
           )}
@@ -116,7 +147,7 @@ const AppContent = () => {
       </main>
 
       <footer className="p-4 text-center text-xs text-slate-500">
-        &copy; {new Date().getFullYear()} Remote Worker Health
+        &copy; {new Date().getFullYear()} {t("app.title")}
       </footer>
     </div>
   );
@@ -124,10 +155,12 @@ const AppContent = () => {
 
 export const App = () => {
   return (
-    <AuthProvider>
-      <Router>
-        <AppContent />
-      </Router>
-    </AuthProvider>
+    <LanguageProvider>
+      <AuthProvider>
+        <Router>
+          <AppContent />
+        </Router>
+      </AuthProvider>
+    </LanguageProvider>
   );
 };

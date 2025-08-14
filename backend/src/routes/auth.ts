@@ -1,7 +1,8 @@
 import express from 'express';
+import bcrypt from 'bcrypt';
 import jwt from 'jsonwebtoken';
 import User from '../models/User';
-import { UserStatistics } from '../models/Achievement';
+import { NotificationService } from '../services/notification';
 
 const router = express.Router();
 
@@ -12,50 +13,48 @@ router.post('/register', async (req, res) => {
 
     // Проверяем, существует ли пользователь
     const existingUser = await User.findOne({
-      where: {
-        [require('sequelize').Op.or]: [{ email }, { username }],
-      },
+      where: { email },
     });
 
     if (existingUser) {
       return res.status(400).json({
-        message: 'User with this email or username already exists',
+        message: "User with this email already exists",
       });
     }
 
     // Хешируем пароль
-    const hashedPassword = await User.hashPassword(password);
+    const hashedPassword = await bcrypt.hash(password, 10);
 
     // Создаем пользователя
     const user = await User.create({
       email,
       password: hashedPassword,
       username,
-      healthScore: 0,
+      healthScore: 100,
       level: 1,
       experience: 0,
       badges: [],
-    } as any);
-
-    // Создаем статистику пользователя
-    await UserStatistics.create({
-      userId: user.id,
-      totalWorkTime: 0,
-      goodPostureTime: 0,
-      blinkReminders: 0,
-      pomodoroSessions: 0,
-      consecutiveGoodPostureDays: 0,
     });
 
     // Генерируем JWT токен
     const token = jwt.sign(
       { userId: user.id, email: user.email },
-      process.env.JWT_SECRET || 'your-secret-key',
-      { expiresIn: '7d' }
+      process.env.JWT_SECRET || "your-secret-key",
+      { expiresIn: "7d" }
     );
 
+    // Отправляем приветственный email
+    try {
+      const notificationService = new NotificationService();
+      await notificationService.sendWelcomeEmail(user);
+      console.log(`Welcome email sent to ${user.email}`);
+    } catch (emailError) {
+      console.error('Error sending welcome email:', emailError);
+      // Не прерываем регистрацию, если email не отправился
+    }
+
     res.status(201).json({
-      message: 'User successfully registered',
+      message: "User registered successfully",
       token,
       user: {
         id: user.id,
@@ -64,12 +63,14 @@ router.post('/register', async (req, res) => {
         healthScore: user.healthScore,
         level: user.level,
         experience: user.experience,
-        badges: user.badges || [],
+        badges: user.badges,
       },
     });
   } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({ message: 'Registration error' });
+    console.error("Registration error:", error);
+    res.status(500).json({
+      message: "Internal server error",
+    });
   }
 });
 

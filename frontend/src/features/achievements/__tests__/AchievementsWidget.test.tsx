@@ -3,6 +3,7 @@ import { render, screen, waitFor } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
 import { AuthProvider } from '../../../shared/context/AuthContext';
 import { AchievementsWidget } from '../AchievementsWidget';
+import { LanguageProvider } from '../../../shared/context/LanguageContext';
 
 // Mock fetch
 const mockFetch = jest.fn();
@@ -51,13 +52,14 @@ const mockUserAchievements = {
   experience: 250
 };
 
+// Helper function to render with providers
 const renderWithProviders = (component: React.ReactElement) => {
   return render(
-    <BrowserRouter>
-      <AuthProvider>
+    <AuthProvider>
+      <LanguageProvider>
         {component}
-      </AuthProvider>
-    </BrowserRouter>
+      </LanguageProvider>
+    </AuthProvider>
   );
 };
 

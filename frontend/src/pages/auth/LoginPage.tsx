@@ -1,10 +1,12 @@
 import React, { useState } from "react";
 import { useAuth } from "../../shared/context/AuthContext";
+import { useLanguage } from "../../shared/context/LanguageContext";
 import { Card } from "../../shared/ui/Card";
 import { useNavigate } from "react-router-dom";
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -32,16 +34,16 @@ const LoginPage: React.FC = () => {
       <div className="max-w-md w-full space-y-8">
         <div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
-            {isLogin ? "Sign In" : "Create Account"}
+            {isLogin ? t('auth.signInToAccount') : t('auth.createAccount')}
           </h2>
           <p className="mt-2 text-center text-sm text-gray-600">
-            {isLogin ? "Or " : "Already have an account? "}
+            {isLogin ? t('auth.noAccount') : t('auth.hasAccount')}
             <button
               type="button"
               className="font-medium text-indigo-600 hover:text-indigo-500"
               onClick={() => setIsLogin(!isLogin)}
             >
-              {isLogin ? "register" : "sign in"}
+              {isLogin ? t('auth.register') : t('auth.signIn')}
             </button>
           </p>
         </div>
@@ -59,7 +61,7 @@ const LoginPage: React.FC = () => {
                 htmlFor="email"
                 className="block text-sm font-medium text-gray-700"
               >
-                Email
+                {t('auth.email')}
               </label>
               <input
                 id="email"
@@ -68,7 +70,7 @@ const LoginPage: React.FC = () => {
                 autoComplete="email"
                 required
                 className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Enter email"
+                placeholder={t('auth.enterEmail')}
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
               />
@@ -79,7 +81,7 @@ const LoginPage: React.FC = () => {
                 htmlFor="password"
                 className="block text-sm font-medium text-gray-700"
               >
-                Пароль
+                {t('auth.password')}
               </label>
               <input
                 id="password"
@@ -88,7 +90,7 @@ const LoginPage: React.FC = () => {
                 autoComplete="current-password"
                 required
                 className="mt-1 appearance-none relative block w-full px-3 py-2 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 focus:z-10 sm:text-sm"
-                placeholder="Enter password"
+                placeholder={t('auth.enterPassword')}
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
               />
@@ -100,7 +102,7 @@ const LoginPage: React.FC = () => {
                 disabled={isLoading}
                 className="group relative w-full flex justify-center py-2 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 disabled:opacity-50"
               >
-                {isLoading ? "Loading..." : isLogin ? "Sign In" : "Register"}
+                {isLoading ? t('auth.loading') : isLogin ? t('auth.signIn') : t('auth.register')}
               </button>
             </div>
           </form>

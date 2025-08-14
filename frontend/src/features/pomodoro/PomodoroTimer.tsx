@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { useAuth } from "../../shared/context/AuthContext";
+import { useLanguage } from "../../shared/context/LanguageContext";
 
 const POMODORO_DURATION = 25 * 60; // 25 минут
 const BREAK_DURATION = 5 * 60; // 5 минут
@@ -18,6 +19,7 @@ interface TimerState {
 
 export const PomodoroTimer: React.FC = () => {
   const { user, token } = useAuth();
+  const { t } = useLanguage();
   
   // Загрузка состояния из localStorage
   const loadTimerState = (): TimerState => {
@@ -247,13 +249,13 @@ export const PomodoroTimer: React.FC = () => {
   const getModeDisplay = () => {
     switch (timerState.mode) {
       case "work":
-        return { icon: "🍅", title: "Work", subtitle: "Focus on the task" };
+        return { icon: "🍅", title: t('pomodoro.work'), subtitle: t('pomodoro.focusTask') };
       case "break":
-        return { icon: "☕", title: "Break", subtitle: "Rest and relax" };
+        return { icon: "☕", title: t('pomodoro.break'), subtitle: t('pomodoro.restRelax') };
       case "longBreak":
-        return { icon: "🌟", title: "Long Break", subtitle: "Take a longer rest" };
+        return { icon: "🌟", title: t('pomodoro.longBreak'), subtitle: t('pomodoro.longerRest') };
       default:
-        return { icon: "🍅", title: "Work", subtitle: "Focus on the task" };
+        return { icon: "🍅", title: t('pomodoro.work'), subtitle: t('pomodoro.focusTask') };
     }
   };
 
@@ -273,26 +275,40 @@ export const PomodoroTimer: React.FC = () => {
         </div>
       </div>
 
+      {/* Объяснение важности привычки */}
+      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 text-left mb-4 w-full">
+        <h3 className="font-semibold text-blue-900 mb-2">💡 {t('pomodoro.whyImportant.title')}</h3>
+        <p className="text-sm text-blue-800">
+          {t('pomodoro.whyImportant.subtitle')}
+        </p>
+        <ul className="text-sm text-blue-800 mt-2 space-y-1">
+          <li>• {t('pomodoro.whyImportant.focus')}</li>
+          <li>• {t('pomodoro.whyImportant.eyes')}</li>
+          <li>• {t('pomodoro.whyImportant.burnout')}</li>
+          <li>• {t('pomodoro.whyImportant.quality')}</li>
+        </ul>
+      </div>
+
       <div className="flex gap-2 mb-4">
         <button
           onClick={start}
           disabled={timerState.isActive}
           className="px-6 py-2 bg-green-500 text-white rounded-lg disabled:opacity-50 hover:bg-green-600 transition-colors font-medium"
         >
-          {timerState.isActive ? "Working..." : "Start"}
+          {timerState.isActive ? t('pomodoro.working') : t('pomodoro.start')}
         </button>
         <button
           onClick={stop}
           disabled={!timerState.isActive}
           className="px-6 py-2 bg-red-500 text-white rounded-lg disabled:opacity-50 hover:bg-red-600 transition-colors font-medium"
         >
-          Stop
+          {t('pomodoro.stop')}
         </button>
         <button
           onClick={reset}
           className="px-6 py-2 bg-gray-300 text-gray-800 rounded-lg hover:bg-gray-400 transition-colors font-medium"
         >
-          Reset
+          {t('pomodoro.reset')}
         </button>
       </div>
 
@@ -303,13 +319,13 @@ export const PomodoroTimer: React.FC = () => {
             <div className="text-2xl font-bold text-indigo-600">
               {timerState.completedSessions}
             </div>
-            <div className="text-sm text-gray-600">Sessions completed</div>
+            <div className="text-sm text-gray-600">{t('pomodoro.sessionsCompleted')}</div>
           </div>
           <div>
             <div className="text-2xl font-bold text-green-600">
               {Math.floor(timerState.totalWorkTime / 60)}
             </div>
-            <div className="text-sm text-gray-600">Minutes worked</div>
+            <div className="text-sm text-gray-600">{t('pomodoro.minutesWorked')}</div>
           </div>
         </div>
       </div>
@@ -318,9 +334,9 @@ export const PomodoroTimer: React.FC = () => {
       {timerState.completedSessions > 0 && (
         <div className="text-center text-sm text-gray-500">
           {timerState.completedSessions % 4 === 0 ? (
-            <span className="text-purple-600">🌟 Next: Long Break!</span>
+            <span className="text-purple-600">🌟 {t('pomodoro.nextLongBreak')}!</span>
           ) : (
-            <span>Next long break in {4 - (timerState.completedSessions % 4)} sessions</span>
+            <span>{t('pomodoro.nextLongBreak')} {4 - (timerState.completedSessions % 4)} {t('pomodoro.sessions')}</span>
           )}
         </div>
       )}
@@ -328,7 +344,7 @@ export const PomodoroTimer: React.FC = () => {
       {/* Подсказка по геймификации */}
       {user && (
         <div className="text-center text-sm text-gray-500 mt-2">
-          💡 Each completed session earns health points!
+          💡 {t('pomodoro.earnPoints')}
         </div>
       )}
     </div>

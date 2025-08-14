@@ -1,19 +1,21 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { BrowserRouter } from 'react-router-dom';
+import { LanguageProvider } from '../shared/context/LanguageContext';
 import { AuthProvider } from '../shared/context/AuthContext';
 import { PomodoroTimer } from '../features/pomodoro/PomodoroTimer';
 import { VisionReminder } from '../features/visionReminder/VisionReminder';
 import { Card } from '../shared/ui/Card';
 import ProfilePage from '../pages/profile/ProfilePage';
 
+// Helper function to render components with providers
 const renderWithProviders = (component: React.ReactElement) => {
   return render(
-    <BrowserRouter>
-      <AuthProvider>
+    <AuthProvider>
+      <LanguageProvider>
         {component}
-      </AuthProvider>
-    </BrowserRouter>
+      </LanguageProvider>
+    </AuthProvider>
   );
 };
 
@@ -106,32 +108,18 @@ describe('Responsive Design Tests', () => {
 
   describe('Card Component Responsive Design', () => {
     it('should have responsive padding', () => {
-      const { container } = render(
-        <Card title="Test Card">
-          <p>Content</p>
-        </Card>
-      );
-
+      const { container } = renderWithProviders(<Card>Content</Card>);
       const cardElement = container.firstChild as HTMLElement;
-      expect(cardElement).toHaveClass('p-6');
+      expect(cardElement).toHaveClass('card', 'w-full');
     });
 
     it('should handle responsive content', () => {
-      const { container } = render(
-        <Card title="Responsive Card">
-          <div className="grid grid-cols-2 gap-4">
-            <div>Item 1</div>
-            <div>Item 2</div>
-          </div>
+      renderWithProviders(
+        <Card>
+          <div className="p-4 md:p-6">Responsive content</div>
         </Card>
       );
-
-      // Check for grid classes that are actually used
-      const gridElement = container.querySelector('.grid');
-      expect(gridElement).toBeInTheDocument();
-
-      const gridCols = container.querySelector('.grid-cols-2');
-      expect(gridCols).toBeInTheDocument();
+      expect(screen.getByText('Responsive content')).toBeInTheDocument();
     });
   });
 

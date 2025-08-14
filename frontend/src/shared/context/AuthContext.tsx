@@ -8,6 +8,7 @@ interface User {
   level: number;
   experience: number;
   badges: string[];
+  subscriptionPlanId?: string;
 }
 
 interface AuthContextType {

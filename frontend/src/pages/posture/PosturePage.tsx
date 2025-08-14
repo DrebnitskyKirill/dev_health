@@ -6,6 +6,7 @@ import React, {
   useState,
 } from "react";
 import { Card } from "../../shared/ui/Card";
+import { useLanguage } from "../../shared/context/LanguageContext";
 import Webcam from "react-webcam";
 import * as tf from "@tensorflow/tfjs";
 import "@tensorflow/tfjs-backend-webgl";
@@ -54,6 +55,7 @@ function computeAngleDeg(
 }
 
 const PosturePage: React.FC = () => {
+  const { t } = useLanguage();
   const webcamRef = useRef<Webcam | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const detectorRef = useRef<PoseDetector | null>(null);
@@ -301,7 +303,7 @@ const PosturePage: React.FC = () => {
         }
 
         console.log("TensorFlow.js backend:", tf.getBackend());
-        console.log("WebGL context:", tf.backend().gpgpu.gl.canvas);
+        // Убираем проблемную строку с gpgpu для избежания ошибок TypeScript
 
         setStatus("running");
 
@@ -365,8 +367,22 @@ const PosturePage: React.FC = () => {
   return (
     <div className="grid gap-6">
       <Card title="Posture Monitoring">
+        {/* Объяснение важности привычки */}
+        <div className="bg-orange-50 border border-orange-200 rounded-lg p-4 text-left mb-4">
+          <h3 className="font-semibold text-orange-900 mb-2">💡 {t('posture.whyImportant.title')}</h3>
+          <p className="text-sm text-orange-800">
+            {t('posture.whyImportant.subtitle')}
+          </p>
+          <ul className="text-sm text-orange-800 mt-2 space-y-1">
+            <li>• {t('posture.whyImportant.pain')}</li>
+            <li>• {t('posture.whyImportant.headaches')}</li>
+            <li>• {t('posture.whyImportant.spine')}</li>
+            <li>• {t('posture.whyImportant.productivity')}</li>
+          </ul>
+        </div>
+
         <div className="flex items-center gap-4 mb-4">
-          <span className="text-sm text-slate-600">Status:</span>
+          <span className="text-sm text-slate-600">{t('posture.status')}:</span>
           <span
             className={`text-sm font-medium ${
               status === "running"
@@ -376,10 +392,10 @@ const PosturePage: React.FC = () => {
                 : ""
             }`}
           >
-            {status}
+            {status === "running" ? t('posture.monitoring') : status}
           </span>
           <span className="text-sm text-slate-600">
-            Quality:{" "}
+            {t('posture.quality')}:{" "}
             <span
               className={`font-semibold ${
                 performance.quality === "high"
@@ -393,13 +409,15 @@ const PosturePage: React.FC = () => {
             </span>
           </span>
           <span className="text-sm text-slate-600">
-            FPS: <span className="font-semibold">{performance.fps}</span>
+            {t('posture.fps')}: <span className="font-semibold">{performance.fps}</span>
           </span>
           <span className="ml-auto text-sm">
-            Neck angle:{" "}
+            {t('posture.neckAngle')}:{" "}
             <span className="font-semibold">{neckAngle.toFixed(0)}°</span>
           </span>
         </div>
+
+
         <div
           className="relative rounded-2xl overflow-hidden border border-slate-200"
           style={{ width: VIDEO_WIDTH, height: VIDEO_HEIGHT }}
@@ -425,8 +443,7 @@ const PosturePage: React.FC = () => {
           />
         </div>
         <p className="text-xs text-slate-500 mt-3">
-          The camera is used locally for pose analysis. Only aggregated events
-          without images are sent to the server.
+          {t('posture.cameraDescription')}
         </p>
       </Card>
     </div>
