@@ -377,10 +377,10 @@ const ProfilePage: React.FC = () => {
           </Card>
 
           {/* Настройки приложения */}
-          <Card title={t("settings.title")}>
-            <div className="space-y-8">
+          {/* <Card title={t("settings.title")}>
+            <div className="space-y-8"> */}
               {/* Язык */}
-              <div>
+              {/* <div>
                 <h4 className="text-lg font-medium text-gray-800 mb-4">
                   {t("settings.language")}
                 </h4>
@@ -409,7 +409,7 @@ const ProfilePage: React.FC = () => {
                     Русский
                   </button>
                 </div>
-              </div>
+              </div> */}
 
               {/* Уведомления */}
               {/* <div>
@@ -447,7 +447,7 @@ const ProfilePage: React.FC = () => {
                       <div className="w-11 h-6 bg-gray-200 peer-focus:outline-none peer-focus:ring-4 peer-focus:ring-blue-300 rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all peer-checked:bg-blue-600"></div>
                     </label>
                   </div>
-                </div>
+                </div> */}
 
                 {/* Тестирование уведомлений */}
                 {/* <div className="mt-6 p-4 bg-blue-50 rounded-lg">
@@ -500,10 +500,10 @@ const ProfilePage: React.FC = () => {
                       {isSendingNotification ? 'Отправка...' : 'Еженедельное'}
                     </button>
                   </div>
-                </div> */}
-              {/* </div> */}
+                </div>
+              </div>
             </div>
-          </Card>
+          </Card> */}
         </div>
 
         {/* Правая колонка - Лидерборд */}
