@@ -40,14 +40,6 @@ const DashboardPage: React.FC = () => {
             {t('dashboard.trackHealth')}
           </p>
         </div>
-        <div className="flex items-center space-x-4">
-          <div className="text-right">
-            <div className="text-sm text-gray-500">{t('dashboard.level')}</div>
-            <div className="text-2xl font-bold text-indigo-600">
-              {user.level}
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Быстрые действия */}

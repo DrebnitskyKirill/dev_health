@@ -380,7 +380,7 @@ const ProfilePage: React.FC = () => {
           <Card title={t("settings.title")}>
             <div className="space-y-8">
               {/* Язык */}
-              <div>
+              {/* <div>
                 <h4 className="text-lg font-medium text-gray-800 mb-4">
                   {t("settings.language")}
                 </h4>
@@ -409,7 +409,7 @@ const ProfilePage: React.FC = () => {
                     Русский
                   </button>
                 </div>
-              </div>
+              </div> */}
 
               {/* Уведомления */}
               <div>

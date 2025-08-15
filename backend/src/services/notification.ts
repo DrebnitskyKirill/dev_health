@@ -21,12 +21,12 @@ export class NotificationService {
     // Создаем транспортер для отправки email
     // В продакшене здесь будут реальные SMTP настройки
     this.transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST || 'smtp.gmail.com',
+      host: process.env.SMTP_HOST,
       port: parseInt(process.env.SMTP_PORT || '587'),
       secure: false, // true для 465, false для других портов
       auth: {
-        user: process.env.SMTP_USER || 'your-email@gmail.com',
-        pass: process.env.SMTP_PASS || 'your-app-password',
+        user: process.env.SMTP_USER,
+        pass: process.env.SMTP_PASS,
       },
     });
   }
@@ -35,7 +35,7 @@ export class NotificationService {
   async sendEmail(notification: EmailNotification): Promise<boolean> {
     try {
       const mailOptions = {
-        from: process.env.SMTP_FROM || 'DevHealth <noreply@devhealth.com>',
+        from: process.env.SMTP_FROM,
         to: notification.to,
         subject: notification.subject,
         html: notification.html,

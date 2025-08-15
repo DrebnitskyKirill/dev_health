@@ -59,14 +59,14 @@ const AppContent = () => {
         >
           {t("nav.profile")}
         </Link>
-        <Link
+        {/* <Link
           to="/subscription"
           className={`pill ${
             isActive("/subscription") ? "pill-active" : "pill-muted"
           }`}
         >
           {t("nav.subscription")}
-        </Link>
+        </Link> */}
       </nav>
     );
   };
@@ -93,7 +93,7 @@ const AppContent = () => {
 
           <div className="flex items-center gap-3">
             {/* Language Switcher */}
-            <div className="flex items-center gap-2">
+            {/* <div className="flex items-center gap-2">
               <button
                 onClick={() => setLanguage("en")}
                 className={`px-2 py-1 text-xs rounded ${
@@ -114,7 +114,7 @@ const AppContent = () => {
               >
                 RU
               </button>
-            </div>
+            </div> */}
 
             {user && (
               <button
