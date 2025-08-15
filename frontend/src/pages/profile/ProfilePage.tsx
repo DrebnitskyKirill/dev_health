@@ -380,7 +380,7 @@ const ProfilePage: React.FC = () => {
           <Card title={t("settings.title")}>
             <div className="space-y-8">
               {/* Язык */}
-              {/* <div>
+              <div>
                 <h4 className="text-lg font-medium text-gray-800 mb-4">
                   {t("settings.language")}
                 </h4>
@@ -409,10 +409,10 @@ const ProfilePage: React.FC = () => {
                     Русский
                   </button>
                 </div>
-              </div> */}
+              </div>
 
               {/* Уведомления */}
-              <div>
+              {/* <div>
                 <h4 className="text-lg font-medium text-gray-800 mb-4">
                   {t("settings.notifications")}
                 </h4>
@@ -450,7 +450,7 @@ const ProfilePage: React.FC = () => {
                 </div>
 
                 {/* Тестирование уведомлений */}
-                <div className="mt-6 p-4 bg-blue-50 rounded-lg">
+                {/* <div className="mt-6 p-4 bg-blue-50 rounded-lg">
                   <h5 className="text-md font-medium text-blue-800 mb-3">
                     Тестирование Email уведомлений
                   </h5>
@@ -500,8 +500,8 @@ const ProfilePage: React.FC = () => {
                       {isSendingNotification ? 'Отправка...' : 'Еженедельное'}
                     </button>
                   </div>
-                </div>
-              </div>
+                </div> */}
+              {/* </div> */}
             </div>
           </Card>
         </div>
